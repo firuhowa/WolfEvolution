@@ -1,0 +1,36 @@
+
+{
+	"schemaVersion": 1,
+	"id": "wolfevolution",
+	"version": "1.0.0",
+	"name": "WolfEvolution",
+	"description": "A wolf overhaul mod featuring realistic behavior, advanced AI, combat, animations, and pack systems.",
+	"authors": [
+		"firuhowa"
+	],
+	"license": "CC0-1.0",
+	"icon": "assets/wolfevolution/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"dev.firuhowa.wolfevolution.WolfEvolution"
+		],
+		"client": [
+			"dev.firuhowa.wolfevolution.client.WolfEvolutionClient"
+		]
+	},
+	"mixins": [
+		"wolfevolution.mixins.json",
+		{
+			"config": "wolfevolution.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*",
+		"geckolib": ">=5.5.7"
+	}
+}
