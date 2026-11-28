@@ -1,1 +1,2 @@
-This mod is an expansion for wolves. (Currently in development)
+This mod is an expansion for wolves. (Currently in development
+### Safety
