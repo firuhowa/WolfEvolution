@@ -1,4 +1,3 @@
-
 package dev.firuhowa.wolfevolution.client.mixin;
 
 import dev.firuhowa.wolfevolution.WolfSleepData;
@@ -24,15 +23,14 @@ public abstract class WolfRendererMixin {
             float partialTick,
             CallbackInfo info
     ) {
+
         boolean sleeping = WolfSleepData.isSleeping(wolf);
 
-        // 睡眠状態を描画データへ反映
         ((WolfRenderStateAccess) state).wolfevolution$setSleeping(
                 sleeping
         );
 
         if (sleeping) {
-            // バニラの歩行アニメーションを停止
             state.walkAnimationSpeed = 0.0F;
             state.walkAnimationPos = 0.0F;
         }

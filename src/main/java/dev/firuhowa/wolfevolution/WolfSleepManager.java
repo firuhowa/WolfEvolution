@@ -1,4 +1,3 @@
-
 package dev.firuhowa.wolfevolution;
 
 import net.minecraft.server.level.ServerLevel;
@@ -19,7 +18,6 @@ public final class WolfSleepManager {
     private static final double SLEEP_RADIUS_SQUARED =
             SLEEP_RADIUS * SLEEP_RADIUS;
 
-    // Wolf UUID -> 睡眠中の狼と飼い主
     private static final Map<UUID, SleepingWolf> SLEEPING_WOLVES =
             new HashMap<>();
 
@@ -40,10 +38,10 @@ public final class WolfSleepManager {
             return;
         }
 
-        // すでに睡眠中の狼が範囲外に出ていないか確認
         wakeWolvesOutsideRadius(owner);
 
-        AABB searchArea = owner.getBoundingBox().inflate(SLEEP_RADIUS);
+        AABB searchArea =
+                owner.getBoundingBox().inflate(SLEEP_RADIUS);
 
         for (Wolf wolf : level.getEntitiesOfClass(
                 Wolf.class,
@@ -55,6 +53,13 @@ public final class WolfSleepManager {
 
             UUID wolfId = wolf.getUUID();
 
+            // 万一、管理情報がないまま睡眠状態が残っていた場合に復旧
+            if (!SLEEPING_WOLVES.containsKey(wolfId)
+                    && WolfSleepData.isSleeping(wolf)) {
+
+                WolfSleepData.recover(wolf);
+            }
+
             if (canSleep(wolf)) {
 
                 SleepingWolf sleepingWolf =
@@ -62,17 +67,23 @@ public final class WolfSleepManager {
 
                 // 初めて睡眠する場合だけ元のAI状態を保存
                 if (sleepingWolf == null) {
+
+                    boolean wasNoAi = wolf.isNoAi();
+
                     sleepingWolf = new SleepingWolf(
                             ownerId,
                             wolf,
-                            wolf.isNoAi()
+                            wasNoAi
                     );
 
                     SLEEPING_WOLVES.put(wolfId, sleepingWolf);
-                }
 
-                // 睡眠状態をクライアントへ同期
-                WolfSleepData.setSleeping(wolf, true);
+                    WolfSleepData.setSleeping(
+                            wolf,
+                            true,
+                            wasNoAi
+                    );
+                }
 
                 // AIを停止
                 wolf.setNoAi(true);
@@ -85,13 +96,13 @@ public final class WolfSleepManager {
 
             } else {
 
-                // 睡眠できない状態なら起床
                 wakeWolf(wolf);
             }
         }
     }
 
     private static boolean canSleep(Wolf wolf) {
+
         return wolf.isAlive()
                 && wolf.isTame()
                 && !wolf.isOrderedToSit()
@@ -101,7 +112,6 @@ public final class WolfSleepManager {
                 && !wolf.isInWaterOrRain();
     }
 
-    // 睡眠中の狼が飼い主から離れた場合に起こす
     private static void wakeWolvesOutsideRadius(ServerPlayer owner) {
 
         UUID ownerId = owner.getUUID();
@@ -111,7 +121,9 @@ public final class WolfSleepManager {
 
         while (iterator.hasNext()) {
 
-            Map.Entry<UUID, SleepingWolf> entry = iterator.next();
+            Map.Entry<UUID, SleepingWolf> entry =
+                    iterator.next();
+
             SleepingWolf sleepingWolf = entry.getValue();
 
             if (!sleepingWolf.ownerId().equals(ownerId)) {
@@ -142,11 +154,10 @@ public final class WolfSleepManager {
         if (sleepingWolf != null) {
             restoreWolf(sleepingWolf);
         } else {
-            WolfSleepData.setSleeping(wolf, false);
+            WolfSleepData.recover(wolf);
         }
     }
 
-    // 睡眠状態とAIを元に戻す
     private static void restoreWolf(SleepingWolf sleepingWolf) {
 
         Wolf wolf = sleepingWolf.wolf();
@@ -155,7 +166,7 @@ public final class WolfSleepManager {
             return;
         }
 
-        // 睡眠状態を解除してクライアントへ同期
+        // 睡眠状態を解除
         WolfSleepData.setSleeping(wolf, false);
 
         // ナビゲーションを停止
@@ -166,6 +177,9 @@ public final class WolfSleepManager {
 
         // 睡眠前のAI状態に戻す
         wolf.setNoAi(sleepingWolf.wasNoAi());
+
+        wolf.setOrderedToSit(false);
+        wolf.setInSittingPose(false);
     }
 
     public static void wakeOwnerWolves(UUID ownerId) {
@@ -175,7 +189,9 @@ public final class WolfSleepManager {
 
         while (iterator.hasNext()) {
 
-            Map.Entry<UUID, SleepingWolf> entry = iterator.next();
+            Map.Entry<UUID, SleepingWolf> entry =
+                    iterator.next();
+
             SleepingWolf sleepingWolf = entry.getValue();
 
             if (sleepingWolf.ownerId().equals(ownerId)) {

@@ -1,4 +1,3 @@
-
 package dev.firuhowa.wolfevolution;
 
 import net.minecraft.core.BlockPos;
@@ -22,17 +21,12 @@ public final class WolfWhistleHandler {
     private WolfWhistleHandler() {
     }
 
-    /**
-     * プレイヤーの口笛をサーバー側で処理する。
-     */
     public static void handle(ServerPlayer player) {
 
         ServerLevel level = player.level();
 
-        // 口笛を吹いたのでAFK時間をリセット
         PlayerAfkTracker.markActive(player);
 
-        // プレイヤー周辺30ブロックを検索
         AABB searchArea =
                 player.getBoundingBox().inflate(SEARCH_RADIUS);
 
@@ -51,7 +45,10 @@ public final class WolfWhistleHandler {
             // 睡眠中なら起こす
             WolfSleepManager.wakeWolf(wolf);
 
-            // 座っている狼を強制的に立たせる
+            // 旧バージョンで残ったNoAI状態も復旧
+            wolf.setNoAi(false);
+
+            // 座っている狼を立たせる
             wolf.setOrderedToSit(false);
             wolf.setInSittingPose(false);
 
@@ -60,9 +57,6 @@ public final class WolfWhistleHandler {
         }
     }
 
-    /**
-     * プレイヤーから5ブロック以内の安全な場所へ狼を移動する。
-     */
     private static void teleportToSafePosition(
             ServerLevel level,
             ServerPlayer player,
@@ -71,7 +65,6 @@ public final class WolfWhistleHandler {
 
         BlockPos playerPos = player.blockPosition();
 
-        // 複数の候補地点を順番に調べる
         for (int i = 0; i < 48; i++) {
 
             double angle = i * 2.399963229728653D;
@@ -88,7 +81,6 @@ public final class WolfWhistleHandler {
             int blockX = playerPos.getX() + offsetX;
             int blockZ = playerPos.getZ() + offsetZ;
 
-            // プレイヤーの高さ付近を上下に検索
             int[] verticalOffsets = {
                     0, -1, 1, -2, 2
             };
@@ -104,7 +96,6 @@ public final class WolfWhistleHandler {
                 BlockPos headPos = feetPos.above();
                 BlockPos groundPos = feetPos.below();
 
-                // プレイヤーから5ブロック以内か確認
                 double dx = blockX + 0.5D - player.getX();
                 double dz = blockZ + 0.5D - player.getZ();
 
@@ -113,17 +104,14 @@ public final class WolfWhistleHandler {
                     continue;
                 }
 
-                // ワールド境界の外には移動しない
                 if (!level.getWorldBorder().isWithinBounds(feetPos)) {
                     continue;
                 }
 
-                // 足元に固体ブロックがあるか確認
                 if (!level.getBlockState(groundPos).isSolidRender()) {
                     continue;
                 }
 
-                // 足元と頭上が水や溶岩などでないことを確認
                 if (!level.getBlockState(feetPos)
                         .getFluidState().isEmpty()) {
                     continue;
@@ -134,7 +122,6 @@ public final class WolfWhistleHandler {
                     continue;
                 }
 
-                // 移動先に狼の当たり判定が収まるか確認
                 double targetX = blockX + 0.5D;
                 double targetZ = blockZ + 0.5D;
 
@@ -148,7 +135,6 @@ public final class WolfWhistleHandler {
                     continue;
                 }
 
-                // 安全な場所が見つかったので移動
                 wolf.getNavigation().stop();
 
                 wolf.teleportTo(
@@ -162,7 +148,5 @@ public final class WolfWhistleHandler {
                 return;
             }
         }
-
-        // 安全な場所が見つからない場合は無理に移動させない
     }
 }
