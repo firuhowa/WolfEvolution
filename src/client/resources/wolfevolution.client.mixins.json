@@ -1,0 +1,19 @@
+
+{
+	"required": true,
+	"package": "dev.firuhowa.wolfevolution.client.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"ExampleClientMixin",
+		"WolfRenderStateMixin",
+		"WolfRendererMixin",
+		"WolfModelMixin",
+		"AdultWolfModelAccessorMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}
